@@ -2,7 +2,6 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -43,7 +42,12 @@ impl<T> LinkedList<T> {
             end: None,
         }
     }
+}
 
+impl<T> LinkedList<T>
+where
+    T: Clone + PartialOrd
+{
     pub fn add(&mut self, obj: T) {
         let mut node = Box::new(Node::new(obj));
         node.next = None;
@@ -69,14 +73,36 @@ impl<T> LinkedList<T> {
             },
         }
     }
-	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
-	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+	pub fn merge(list_a: LinkedList<T>, list_b: LinkedList<T>) -> Self {
+        let mut res = Self::new();
+        let mut list_a_head = list_a.start;
+        let mut list_b_head = list_b.start;
+
+        while list_a_head.is_some() || list_b_head.is_some() {
+            let a_value = list_a_head.map(|node| unsafe { &(*node.as_ptr()).val });
+            let b_value = list_b_head.map(|node| unsafe { &(*node.as_ptr()).val });
+            match (a_value, b_value) {
+                (Some(a), Some(b)) => {
+                    if a < b {
+                        res.add(a.clone());
+                        list_a_head = unsafe { (*list_a_head.unwrap().as_ptr()).next };
+                    } else {
+                        res.add(b.clone());
+                        list_b_head = unsafe { (*list_b_head.unwrap().as_ptr()).next };
+                    }
+                },
+                (Some(a), None) => {
+                    res.add(a.clone());
+                    list_a_head = unsafe { (*list_a_head.unwrap().as_ptr()).next };
+                },
+                (None, Some(b)) => {
+                    res.add(b.clone());
+                    list_b_head = unsafe { (*list_b_head.unwrap().as_ptr()).next };
+                },
+                _ => break,
+            }
         }
+	    res	
 	}
 }
 
@@ -149,6 +175,7 @@ mod tests {
 			assert_eq!(target_vec[i],*list_c.get(i as i32).unwrap());
 		}
 	}
+
 	#[test]
 	fn test_merge_linked_list_2() {
 		let mut list_a = LinkedList::<i32>::new();
